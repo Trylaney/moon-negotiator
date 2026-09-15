@@ -101,11 +101,11 @@ test "q zero makes a language unacceptable" {
 ///|
 test "filter languages preserves server offer order" {
   match
-    filter_languages("zh;q=1, en;q=0.5", ["en-US", "ja-JP", "zh-TW", "en-GB"]) {
+    filter_languages("zh;q=1, en;q=0.5", ["en-US", "ja-JP", "zh-CN", "en-GB"]) {
     Ok(result) => {
       assert_eq(result.length(), 3)
       assert_eq(result[0], "en-US")
-      assert_eq(result[1], "zh-TW")
+      assert_eq(result[1], "zh-CN")
       assert_eq(result[2], "en-GB")
     }
     Err(_) => fail("expected valid filtering")

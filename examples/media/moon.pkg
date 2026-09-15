@@ -1,0 +1,5 @@
+import {
+  "Trylaney/moon-negotiator" @negotiator,
+}
+
+pkgtype(kind: "executable")
