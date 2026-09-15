@@ -270,3 +270,97 @@ pub fn MediaRange::matches(
     }
   }
 }
+
+///|
+fn score_media_offer(
+  ranges : Array[MediaRange],
+  offer : String,
+) -> Result[(Int, Int)?, ParseError] {
+  let concrete = trim_ows(offer)
+
+  match parse_media_name(concrete) {
+    Err(error) => return Err(error)
+    Ok((major, minor)) =>
+      if major == "*" || minor == "*" {
+        return Err(InvalidMediaRange(offer))
+      }
+  }
+
+  let mut found = false
+  let mut best_specificity = -1
+  let mut best_quality = 0
+
+  for range in ranges {
+    match range.matches(concrete) {
+      Err(error) => return Err(error)
+      Ok(true) => {
+        let specificity = range.specificity()
+
+        // A more specific range determines the effective quality
+        // for this concrete representation.
+        if !found || specificity > best_specificity {
+          found = true
+          best_specificity = specificity
+          best_quality = range.quality().thousandths()
+        }
+      }
+      Ok(false) => ()
+    }
+  }
+
+  if found {
+    Ok(Some((best_quality, best_specificity)))
+  } else {
+    Ok(None)
+  }
+}
+
+///|
+/// Selects the preferred concrete media type from server-provided offers.
+///
+/// Selection policy:
+/// 1. For each offer, the most specific matching Accept range determines
+///    its effective q-value.
+/// 2. q=0 makes that offer unacceptable.
+/// 3. Higher effective q-value wins.
+/// 4. If q-values tie, higher matching specificity wins.
+/// 5. If both tie, the earlier server offer wins.
+pub fn select_media_type(
+  header : String,
+  offers : Array[String],
+) -> Result[String?, ParseError] {
+  let ranges = match parse_accept(header) {
+    Ok(parsed) => parsed
+    Err(error) => return Err(error)
+  }
+
+  let mut selected : String? = None
+  let mut selected_quality = -1
+  let mut selected_specificity = -1
+
+  for raw_offer in offers {
+    let offer = trim_ows(raw_offer)
+
+    if offer.length() == 0 {
+      return Err(InvalidMediaRange(raw_offer))
+    }
+
+    match score_media_offer(ranges, offer) {
+      Err(error) => return Err(error)
+      Ok(None) => ()
+      Ok(Some((quality, specificity))) =>
+        if quality > 0 &&
+          (
+            selected is None ||
+            quality > selected_quality ||
+            (quality == selected_quality && specificity > selected_specificity)
+          ) {
+          selected = Some(offer)
+          selected_quality = quality
+          selected_specificity = specificity
+        }
+    }
+  }
+
+  Ok(selected)
+}
