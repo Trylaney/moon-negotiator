@@ -15,11 +15,17 @@ version = "0.1.0"
 
 readme = "README.md"
 
-repository = ""
+repository = "https://github.com/Trylaney/moon-negotiator"
 
 license = "Apache-2.0"
 
-keywords = [ ]
+keywords = [
+  "http",
+  "content-negotiation",
+  "accept",
+  "accept-language",
+  "accept-encoding",
+]
 
 preferred_target = "wasm"
 
