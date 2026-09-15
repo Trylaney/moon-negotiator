@@ -6,6 +6,8 @@ pub struct Quality {
 ///|
 pub(all) suberror ParseError {
   InvalidQuality(String)
+  InvalidMediaRange(String)
+  UnsupportedMediaParameter(String)
 } derive(Eq, Debug)
 
 ///|
