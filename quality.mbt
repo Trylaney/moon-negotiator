@@ -8,6 +8,8 @@ pub(all) suberror ParseError {
   InvalidQuality(String)
   InvalidMediaRange(String)
   UnsupportedMediaParameter(String)
+  InvalidEncodingRange(String)
+  UnsupportedEncodingParameter(String)
 } derive(Eq, Debug)
 
 ///|
