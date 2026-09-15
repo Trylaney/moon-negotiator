@@ -10,6 +10,9 @@ pub(all) suberror ParseError {
   UnsupportedMediaParameter(String)
   InvalidEncodingRange(String)
   UnsupportedEncodingParameter(String)
+  InvalidLanguageRange(String)
+  InvalidLanguageTag(String)
+  UnsupportedLanguageParameter(String)
 } derive(Eq, Debug)
 
 ///|
