@@ -196,3 +196,77 @@ pub fn parse_accept(header : String) -> Result[Array[MediaRange], ParseError] {
 
   Ok(result)
 }
+
+///|
+fn ascii_lower_code(unit : UInt16) -> Int {
+  let code = unit.to_int()
+  if code >= 65 && code <= 90 {
+    code + 32
+  } else {
+    code
+  }
+}
+
+///|
+fn ascii_equal_ignore_case(left : String, right : String) -> Bool {
+  if left.length() != right.length() {
+    return false
+  }
+
+  for i = 0; i < left.length(); i = i + 1 {
+    if ascii_lower_code(left.code_unit_at(i)) !=
+      ascii_lower_code(right.code_unit_at(i)) {
+      return false
+    }
+  }
+
+  true
+}
+
+///|
+/// Returns the structural specificity of this media range.
+///
+/// - `*/*` = 0
+/// - `text/*` = 1
+/// - `text/html` = 2
+pub fn MediaRange::specificity(self : MediaRange) -> Int {
+  if self.major == "*" {
+    0
+  } else if self.minor == "*" {
+    1
+  } else {
+    2
+  }
+}
+
+///|
+/// Tests whether this media range structurally matches a concrete media type.
+///
+/// This method does not consider q-value. A range with q=0 may still
+/// structurally match; acceptability is handled by selection logic.
+pub fn MediaRange::matches(
+  self : MediaRange,
+  media_type : String,
+) -> Result[Bool, ParseError] {
+  let text = trim_ows(media_type)
+
+  match parse_media_name(text) {
+    Err(error) => Err(error)
+    Ok((major, minor)) => {
+      // Server offers must be concrete media types, not media ranges.
+      if major == "*" || minor == "*" {
+        return Err(InvalidMediaRange(media_type))
+      }
+
+      if self.major == "*" {
+        Ok(true)
+      } else if !ascii_equal_ignore_case(self.major, major) {
+        Ok(false)
+      } else if self.minor == "*" {
+        Ok(true)
+      } else {
+        Ok(ascii_equal_ignore_case(self.minor, minor))
+      }
+    }
+  }
+}
